@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campaign → Partner → Lead tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F4F1; --card:#FFFFFF; --ink:#16231F; --muted:#5E6B66; --line:#DCE2DD;
+  --teal:#0E5A52; --teal-soft:#D5E8E4; --amber:#C98A0B; --amber-soft:#F6E7C4; --rust:#B2432F; --slate:#3E5C76;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --serif:'IBM Plex Serif',Georgia,'Times New Roman',serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--paper:#101715; --card:#17211E; --ink:#E7EEEA; --muted:#93A39C; --line:#2A3833;
+    --teal:#4DB6A8; --teal-soft:#1D3A36; --amber:#E3B04B; --amber-soft:#3A2F14; --rust:#E27A66; --slate:#8FB0CC;}
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:120px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;font-variant-numeric:tabular-nums}
+header.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+.bar1{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0 8px;flex-wrap:wrap}
+h1{font-family:var(--serif);font-weight:600;font-size:21px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+nav.tabs{display:flex;gap:4px}
+nav.tabs button{font:inherit;font-weight:500;border:1px solid var(--line);background:transparent;color:var(--muted);padding:7px 14px;border-radius:6px;cursor:pointer}
+nav.tabs button[aria-selected=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+@media (prefers-color-scheme:dark){nav.tabs button[aria-selected=true]{color:#06130F}}
+button:focus-visible,select:focus-visible,summary:focus-visible,th:focus-visible,tr:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:6px 0 12px}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:12px;color:var(--muted)}
+select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);min-width:200px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;border:0;background:transparent;color:var(--muted);padding:7px 13px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--teal-soft);color:var(--teal);font-weight:600}
+main{padding:20px 0 60px}
+.page{display:none}.page.on{display:block}
+.note{color:var(--muted);font-size:12.5px;margin:0 0 14px;max-width:80ch}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;border-top:3px solid var(--teal)}
+.kpi.rev{border-top-color:var(--amber)}
+.kpi .l{color:var(--muted);font-size:12.5px}
+.kpi .v{font-family:var(--serif);font-size:34px;font-weight:600;letter-spacing:-.02em;margin-top:4px}
+.kpi .s{color:var(--muted);font-size:12.5px;margin-top:2px}
+.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:22px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px}
+.panel h2{font-size:15px;margin:0 0 4px;font-weight:600}
+.panel .hint{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.funnel .row{display:grid;grid-template-columns:190px 1fr 60px;align-items:center;gap:10px;margin:8px 0}
+.funnel .name{font-size:13px}
+.funnel .track{background:var(--paper);height:22px;border-radius:4px;overflow:hidden}
+.funnel .fill{height:100%;background:var(--teal);min-width:2px}
+.funnel .row:nth-child(4) .fill{background:var(--slate)}
+.funnel .row:nth-child(5) .fill{background:var(--amber)}
+.funnel .num{text-align:right;font-weight:600}
+.funnel .pct{font-size:11.5px;color:var(--muted);grid-column:2 / 4;margin-top:-4px}
+.zero{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.zbox{border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.zbox .t{font-weight:600;margin-bottom:6px}
+.zbox .big{font-family:var(--serif);font-size:30px;font-weight:600;color:var(--rust)}
+.zbox .of{color:var(--muted);font-size:12.5px}
+.zbox .more{margin-top:8px;font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--teal);font-size:12.5px;font-weight:500}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);font-size:12.5px;background:var(--card);position:sticky;top:0}
+th.sort{cursor:pointer}
+th.sort[aria-sort=ascending]::after{content:" ▲";font-size:9px}
+th.sort[aria-sort=descending]::after{content:" ▼";font-size:9px}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--paper)}
+tr.sel td{background:var(--teal-soft);font-weight:600}
+tfoot td{font-weight:600;border-top:2px solid var(--line);border-bottom:0}
+td.zero0{color:var(--muted)}
+.tag{font-size:11px;padding:1px 6px;border-radius:3px;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.mx td.c{text-align:center;min-width:64px}
+.mx th.c{text-align:center}
+.mxwrap{margin-bottom:22px}
+.chartgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:18px}
+.bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.bcol .b{width:100%;max-width:46px;background:var(--teal);border-radius:3px 3px 0 0;min-height:1px}
+.bcol .bv{font-size:11px;margin-bottom:3px;color:var(--ink)}
+.bcol .bl{font-size:11px;color:var(--muted);margin-top:5px;white-space:nowrap}
+.chartgrid .panel:nth-child(2) .b{background:var(--slate)}
+.chartgrid .panel:nth-child(3) .b{background:var(--amber)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+@media (max-width:900px){
+  .kpis{grid-template-columns:repeat(2,1fr)}.grid2,.chartgrid{grid-template-columns:1fr}
+  .funnel .row{grid-template-columns:130px 1fr 52px}.filebtn{margin-left:0}
+}
+@media (prefers-reduced-motion:no-preference){.fill,.b{transition:width .25s,height .25s}}
+
+.ms{position:relative}
+#msBtn{font:inherit;padding:7px 30px 7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);min-width:240px;max-width:320px;text-align:left;cursor:pointer;position:relative;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#msBtn::after{content:"";position:absolute;right:11px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-70%) rotate(45deg)}
+.mspanel{position:absolute;z-index:30;top:calc(100% + 4px);left:0;width:300px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:10px}
+.mspanel[hidden]{display:none}
+.mspanel input[type=search]{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);margin-bottom:8px}
+.msact{display:flex;gap:12px;margin-bottom:6px}
+.msact button{font:inherit;font-size:12.5px;background:none;border:0;color:var(--teal);cursor:pointer;padding:2px 0;font-weight:500}
+#msList{max-height:260px;overflow:auto}
+#msList label{display:flex;gap:8px;align-items:center;padding:5px 4px;border-radius:4px;cursor:pointer;font-size:13px}
+#msList label:hover{background:var(--paper)}
+#msList .cnt{margin-left:auto;color:var(--muted);font-size:12px}
+.mx tr.grp td{background:var(--paper);font-weight:600;text-align:left;border-bottom:1px solid var(--line);padding-top:10px}
+.mx tr.sub td{font-weight:600;border-top:1px solid var(--line)}
+.mx tr.sub td:first-child{padding-left:10px}
+.errbox{background:#FBE9E5;color:#7A2418;border:1px solid #E6B3A8;border-radius:8px;padding:12px 14px;margin:0 0 16px;display:none}
+@media (prefers-color-scheme:dark){.errbox{background:#3A1D18;color:#F3C2B8;border-color:#6B3328}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="bar1">
+    <div><h1>Campaign → Partner → Lead tracker</h1>
+      <div class="sub" id="asof">Loading…</div></div>
+    <nav class="tabs" role="tablist" aria-label="Pages">
+      <button role="tab" id="tab-overview" aria-selected="true" data-page="overview">Overview</button>
+      <button role="tab" id="tab-monthly" aria-selected="false" data-page="monthly">Month-wise</button>
+    </nav>
+  </div>
+  <div class="filters">
+    <div class="f"><label id="campLbl">Campaigns</label><div class="ms" id="ms"><button type="button" id="msBtn" aria-haspopup="true" aria-expanded="false" aria-labelledby="campLbl msBtn">All campaigns</button><div class="mspanel" id="msPanel" hidden><input type="search" id="msSearch" placeholder="Search campaigns" aria-label="Search campaigns"><div class="msact"><button type="button" id="msAll">Select all</button><button type="button" id="msClear">Clear</button></div><div id="msList"></div></div></div></div>
+    <div class="f"><label>Partner type</label>
+      <div class="seg" id="typeSeg">
+        <button data-v="ALL" aria-pressed="true">All</button><button data-v="AP" aria-pressed="false">AP</button><button data-v="TP" aria-pressed="false">TP</button>
+      </div></div>
+    <div class="f"><label>Month 0 is the partner's…</label>
+      <div class="seg" id="anchorSeg">
+        <button data-v="onboarded_date" aria-pressed="true">Onboarded month</button><button data-v="partner_lead_date" aria-pressed="false">Lead month</button>
+      </div></div>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div class="errbox" id="errbox" role="alert"></div>
+
+  <section class="page on" id="page-overview" aria-labelledby="tab-overview">
+    <p class="note" id="scopeNote"></p>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel funnel"><h2>Funnel</h2><p class="hint">Partners drop off at each step; the last two bars count leads, not partners.</p><div id="funnel"></div></div>
+      <div class="panel"><h2>Zero attempts &amp; zero connects</h2>
+        <p class="hint">Records nobody has called, or that never picked up, in the current selection.</p>
+        <div class="zero" id="zero"></div></div>
+    </div>
+    <div class="panel"><h2>Campaign-wise funnel</h2>
+      <p class="hint">Click a row to add or remove that campaign from the selection. Click a column heading to sort.</p>
+      <div class="scroll"><table id="campTable"></table></div></div>
+  </section>
+
+  <section class="page" id="page-monthly" aria-labelledby="tab-monthly">
+    <p class="note" id="monthNote"></p>
+    <div class="panel mxwrap"><h2>Leads shared, by months since Month 0</h2>
+      <p class="hint">Rows: the month partners were onboarded. Columns: 0 = leads shared in that same month, 1 = the next month, 2 = the month after, and so on.</p>
+      <div class="scroll"><table class="mx" id="mxLeads"></table></div></div>
+    <div class="panel mxwrap"><h2>Conversions, by months since Month 0</h2>
+      <p class="hint">A conversion sits in the month it happened, counted from the partner's Month 0.</p>
+      <div class="scroll"><table class="mx" id="mxConv"></table></div></div>
+    <div class="panel mxwrap"><h2>Revenue (₹, excl. GST), by months since Month 0</h2>
+      <p class="hint">Revenue sits in the month the lead converted.</p>
+      <div class="scroll"><table class="mx" id="mxRev"></table></div></div>
+    <div class="chartgrid" id="charts"></div>
+    <div class="panel"><h2>Calendar months</h2><p class="hint">What actually happened in each calendar month. With two or more campaigns selected, each campaign gets its own rows.</p>
+      <div class="scroll"><table id="calTable"></table></div></div>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+/* DATA SOURCE: your Google Sheet (first tab). It must be shared as "Anyone with the link can view".
+   To use another tab, add its gid, e.g. SHEET_GID='123456789' (the number after gid= in the sheet's URL). */
+var SHEET_ID='1CpZ7Xw6u0fgkw_uH-ijNF4oE3KpaV_dTjrIPzIqIVtg';
+var SHEET_GID='';
+var gq=SHEET_GID?'&gid='+SHEET_GID:'';
+var DATA_SOURCES=[
+  'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:csv'+gq,
+  'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv'+gq,
+  'bq_convopart.csv'   // optional backup copy sitting next to index.html in the repo
+];
+var NO_CAMP='(No campaign)';
+var S={partners:[],sel:{},type:'ALL',anchor:'onboarded_date',sortKey:'rev',sortDir:-1,filter:''};
+var $=function(id){return document.getElementById(id)};
+var fmtN=function(n){return Math.round(n).toLocaleString('en-IN')};
+var fmtR=function(n){return '₹'+Math.round(n).toLocaleString('en-IN')};
+var pct=function(a,b){return b?(a/b*100).toFixed(1)+'%':'–'};
+var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var isTP=function(n){return /^tp/i.test(n)};
+
+/* ---------- CSV + dates ---------- */
+function parseCSV(t){
+  var rows=[],row=[],f='',q=false,i=0,c;
+  if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);
+  for(;i<t.length;i++){
+    c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){f+='"';i++} else q=false } else f+=c }
+    else if(c==='"')q=true;
+    else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&t[i+1]==='\n')i++; row.push(f);f=''; if(row.length>1||row[0]!=='')rows.push(row); row=[] }
+    else f+=c;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  var h=rows.shift().map(function(k){return k.trim()});
+  return rows.map(function(r){var o={};h.forEach(function(k,j){var v=r[j]===undefined?'':r[j].trim();o[k]=v===''?null:v});return o});
+}
+var num=function(v){if(v===null||v===undefined)return null;var n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?null:n};
+/* accepts 2026-10-01, 2026-10-01 12:00:00, 2026-10-01T…, 01/10/2026 (day first), 2026/10/01 */
+function normDate(v){
+  if(!v)return null; var s=String(v).trim(), m;
+  if((m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/)))return m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2);
+  if((m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/)))return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  return null;
+}
+var mkey=function(d){return d?d.slice(0,7):null};
+var midx=function(k){return parseInt(k.slice(0,4),10)*12+parseInt(k.slice(5,7),10)-1};
+var mlabel=function(k){var m=parseInt(k.slice(5,7),10);return (MN[m-1]||'?')+' '+k.slice(0,4)};
+var kFromIdx=function(i){var y=Math.floor(i/12),m=i%12;return y+'-'+(m<9?'0':'')+(m+1)};
+
+/* ---------- model ---------- */
+function buildPartners(rows){
+  var map={},order=[];
+  rows.forEach(function(r){
+    var id=r.partner_id; if(id===null)return;
+    var p=map[id];
+    if(!p){
+      p=map[id]={id:id,name:r.partner_name,type:(r.ap_tp_flag||'').toUpperCase(),campaign:r.campaign_name||NO_CAMP,
+        partner_lead_date:normDate(r.partner_lead_date),onboarded_date:normDate(r.onboarded_date),
+        attempts:num(r.partner_total_attempts)||0,connects:num(r.partner_connected_calls)||0,leads:[]};
+      order.push(p);
+    }
+    if(r.lead_cust_id!==null){
+      p.leads.push({id:r.lead_cust_id,date:normDate(r.lead_date)||normDate(r.lead_created_at),
+        converted:r.lead_converted==='Yes',convDate:normDate(r.lead_converted_date),rev:num(r.lead_revenue_wo_gst)||0,
+        attempts:num(r.lead_attempts)||0,connects:num(r.lead_connected_calls)||0,partner:p});
+    }
+  });
+  return order;
+}
+function visibleNames(){
+  var seen={};
+  S.partners.forEach(function(p){
+    if(S.type==='ALL'||(p.type===S.type&&(S.type==='TP'?isTP(p.campaign):!isTP(p.campaign))))seen[p.campaign]=(seen[p.campaign]||0)+1;
+  });
+  return seen;   // name -> partner count
+}
+function inScope(ps){
+  var vis=visibleNames(), n=Object.keys(S.sel).length;
+  return ps.filter(function(p){
+    if(!(p.campaign in vis))return false;
+    if(S.type!=='ALL'&&p.type!==S.type)return false;
+    return n?!!S.sel[p.campaign]:true;
+  });
+}
+function selection(){return inScope(S.partners)}
+function selectedNames(){return Object.keys(S.sel).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:'base'})})}
+function summarize(ps){
+  var o={onboarded:ps.length,sharers:0,leads:0,conv:0,rev:0,pZero:0,pZeroConn:0,pNoConnTried:0,lZero:0,lZeroConn:0,lNoConnTried:0,zp:[],zl:[]};
+  ps.forEach(function(p){
+    if(p.leads.length)o.sharers++;
+    if(p.attempts===0&&p.connects===0){o.pZero++;o.zp.push(p)}
+    if(p.connects===0){o.pZeroConn++; if(p.attempts>0)o.pNoConnTried++}
+    p.leads.forEach(function(l){
+      o.leads++; if(l.converted){o.conv++;o.rev+=l.rev}
+      if(l.attempts===0&&l.connects===0){o.lZero++;o.zl.push(l)}
+      if(l.connects===0){o.lZeroConn++; if(l.attempts>0)o.lNoConnTried++}
+    });
+  });
+  return o;
+}
+function offset(a,b){return (a&&b)?midx(b)-midx(a):null}
+function cohortRange(ps){
+  var mn=0,mx=0;
+  ps.forEach(function(p){var ak=mkey(p[S.anchor]);if(!ak)return;
+    p.leads.forEach(function(l){var o=offset(ak,mkey(l.date));if(o!==null){mn=Math.min(mn,o);mx=Math.max(mx,o)}
+      if(l.converted){var c=offset(ak,mkey(l.convDate));if(c!==null){mn=Math.min(mn,c);mx=Math.max(mx,c)}}});});
+  return {min:mn,max:mx};
+}
+function cohortRows(ps){
+  var rows={};
+  ps.forEach(function(p){
+    var ak=mkey(p[S.anchor]); if(!ak)return;
+    var r=rows[ak]||(rows[ak]={key:ak,partners:0,leads:{},conv:{},rev:{}});
+    r.partners++;
+    p.leads.forEach(function(l){
+      var lo=offset(ak,mkey(l.date)); if(lo!==null)r.leads[lo]=(r.leads[lo]||0)+1;
+      if(l.converted){var co=offset(ak,mkey(l.convDate)); if(co!==null){r.conv[co]=(r.conv[co]||0)+1;r.rev[co]=(r.rev[co]||0)+l.rev}}
+    });
+  });
+  return Object.keys(rows).sort().map(function(k){return rows[k]});
+}
+function calRange(ps){
+  var lo=1e9,hi=-1;
+  function t(k){if(!k)return;var i=midx(k);if(i<lo)lo=i;if(i>hi)hi=i}
+  ps.forEach(function(p){t(mkey(p.onboarded_date));p.leads.forEach(function(l){t(mkey(l.date));if(l.converted)t(mkey(l.convDate||l.date))})});
+  return hi<0?null:{lo:lo,hi:hi};
+}
+function calendar(ps,rg){
+  if(!rg)return [];
+  var m={};
+  function g(k){return m[k]||(m[k]={key:k,onb:0,leads:0,conv:0,rev:0})}
+  ps.forEach(function(p){
+    var ok=mkey(p.onboarded_date); if(ok)g(ok).onb++;
+    p.leads.forEach(function(l){
+      var lk=mkey(l.date); if(lk)g(lk).leads++;
+      if(l.converted){var ck=mkey(l.convDate||l.date); if(ck){g(ck).conv++;g(ck).rev+=l.rev}}
+    });
+  });
+  var out=[];
+  for(var i=rg.lo;i<=rg.hi;i++){var k=kFromIdx(i);out.push(m[k]||{key:k,onb:0,leads:0,conv:0,rev:0})}
+  return out;
+}
+function campaignRows(){
+  var vis=visibleNames(), m={};
+  S.partners.forEach(function(p){
+    if(!(p.campaign in vis))return; if(S.type!=='ALL'&&p.type!==S.type)return;
+    (m[p.campaign]||(m[p.campaign]=[])).push(p);
+  });
+  return Object.keys(m).map(function(c){
+    var s=summarize(m[c]), types={};m[c].forEach(function(p){types[p.type]=1});
+    return {campaign:c,type:Object.keys(types).sort().join('+'),onboarded:s.onboarded,sharers:s.sharers,leads:s.leads,conv:s.conv,rev:s.rev,pZero:s.pZero,lZero:s.lZero,rate:s.leads?s.conv/s.leads:-1};
+  });
+}
+
+/* ---------- render ---------- */
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function scopeText(){
+  var n=selectedNames(), c=!n.length?'all '+(S.type==='ALL'?'':S.type+' ')+'campaigns':(n.length===1?'campaign '+n[0]:n.length+' campaigns combined ('+n.join(', ')+')');
+  return c+(S.type==='ALL'?', AP and TP partners':', '+S.type+' partners');
+}
+function renderOverview(ps){
+  var s=summarize(ps);
+  $('scopeNote').textContent='Showing '+scopeText()+'. Each partner counts once, under the campaign that onboarded them.';
+  $('kpis').innerHTML=
+    kpi('Partners onboarded',fmtN(s.onboarded),fmtN(s.sharers)+' have shared at least one lead ('+pct(s.sharers,s.onboarded)+')')+
+    kpi('Leads shared',fmtN(s.leads),s.sharers?(s.leads/s.sharers).toFixed(1)+' per sharing partner':'No leads yet')+
+    kpi('Leads converted',fmtN(s.conv),pct(s.conv,s.leads)+' of leads shared')+
+    kpi('Revenue (excl. GST)',fmtR(s.rev),s.conv?fmtR(s.rev/s.conv)+' per conversion':'No conversions yet','rev');
+  var steps=[['Partners onboarded',s.onboarded],['Partners who shared a lead',s.sharers],['Leads shared',s.leads],['Leads converted',s.conv]];
+  var mxP=Math.max(1,s.onboarded),mxL=Math.max(1,s.leads),h='';
+  steps.forEach(function(x,i){
+    var base=i<2?mxP:mxL, w=Math.max(0,x[1]/base*100);
+    h+='<div class="row"><div class="name">'+x[0]+'</div><div class="track"><div class="fill" style="width:'+w+'%"></div></div><div class="num">'+fmtN(x[1])+'</div></div>';
+    if(i===1)h+='<div class="pct">'+pct(s.sharers,s.onboarded)+' of onboarded partners</div>';
+    if(i===3)h+='<div class="pct">'+pct(s.conv,s.leads)+' of leads shared</div>';
+  });
+  $('funnel').innerHTML=h;
+  $('zero').innerHTML=
+    zbox('Partners',s.pZero,s.onboarded,s.pZeroConn,s.pNoConnTried,partnerList(s.zp))+
+    zbox('Customers (leads)',s.lZero,s.leads,s.lZeroConn,s.lNoConnTried,leadList(s.zl));
+  renderCampTable();
+}
+function kpi(l,v,sub,cls){return '<div class="kpi '+(cls||'')+'"><div class="l">'+l+'</div><div class="v">'+v+'</div><div class="s">'+sub+'</div></div>'}
+function zbox(t,z,tot,zc,tried,list){
+  return '<div class="zbox"><div class="t">'+t+'</div><div class="big">'+fmtN(z)+'</div>'+
+   '<div class="of">of '+fmtN(tot)+' have zero attempts and zero connects ('+pct(z,tot)+')</div>'+
+   '<div class="more">Zero connects in all: '+fmtN(zc)+'. '+fmtN(tried)+' of those were dialled but never picked up.</div>'+
+   (z?'<details><summary>See the '+z+'</summary>'+list+'</details>':'')+'</div>';
+}
+function partnerList(ps){
+  return '<div class="scroll"><table><thead><tr><th>Partner</th><th>Campaign</th><th>Type</th></tr></thead><tbody>'+
+   ps.map(function(p){return '<tr><td>'+esc(p.id)+(p.name?' · '+esc(p.name):'')+'</td><td>'+esc(p.campaign)+'</td><td>'+esc(p.type||'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+}
+function leadList(ls){
+  return '<div class="scroll"><table><thead><tr><th>Lead</th><th>Shared by</th><th>Campaign</th></tr></thead><tbody>'+
+   ls.map(function(l){return '<tr><td>'+esc(l.id)+'</td><td>'+esc(l.partner.id)+'</td><td>'+esc(l.partner.campaign)+'</td></tr>'}).join('')+'</tbody></table></div>';
+}
+function renderCampTable(){
+  var rows=campaignRows(), K=S.sortKey, D=S.sortDir, hasSel=Object.keys(S.sel).length>0;
+  rows.sort(function(a,b){var x=a[K],y=b[K]; if(typeof x==='string')return D*x.localeCompare(y); return D*((x>y)-(x<y))||a.campaign.localeCompare(b.campaign)});
+  var cols=[['campaign','Campaign'],['type','Type'],['onboarded','Onboarded'],['sharers','Shared a lead'],['leads','Leads'],['conv','Converted'],['rate','Lead→conv'],['rev','Revenue'],['pZero','Partners: 0 attempts, 0 connects'],['lZero','Leads: 0 attempts, 0 connects']];
+  var th=cols.map(function(c){
+    var a=K===c[0]?(D>0?'ascending':'descending'):'none';
+    return '<th class="sort" tabindex="0" data-k="'+c[0]+'" aria-sort="'+a+'">'+c[1]+'</th>';
+  }).join('');
+  var tot={onboarded:0,sharers:0,leads:0,conv:0,rev:0,pZero:0,lZero:0};
+  var body=rows.map(function(r){
+    var on=!!S.sel[r.campaign];
+    if(!hasSel||on)Object.keys(tot).forEach(function(k){tot[k]+=r[k]});
+    return '<tr class="click'+(on?' sel':'')+'" tabindex="0" aria-selected="'+on+'" data-c="'+esc(r.campaign)+'"><td>'+(on?'✓ ':'')+esc(r.campaign)+'</td><td><span class="tag">'+esc(r.type)+'</span></td><td>'+fmtN(r.onboarded)+'</td><td>'+fmtN(r.sharers)+'</td><td>'+fmtN(r.leads)+'</td><td>'+fmtN(r.conv)+'</td><td>'+(r.leads?pct(r.conv,r.leads):'–')+'</td><td>'+fmtR(r.rev)+'</td><td class="'+(r.pZero?'':'zero0')+'">'+fmtN(r.pZero)+'</td><td class="'+(r.lZero?'':'zero0')+'">'+fmtN(r.lZero)+'</td></tr>';
+  }).join('');
+  $('campTable').innerHTML='<thead><tr>'+th+'</tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>'+(hasSel?'Selected total':'Total')+'</td><td></td><td>'+fmtN(tot.onboarded)+'</td><td>'+fmtN(tot.sharers)+'</td><td>'+fmtN(tot.leads)+'</td><td>'+fmtN(tot.conv)+'</td><td>'+pct(tot.conv,tot.leads)+'</td><td>'+fmtR(tot.rev)+'</td><td>'+fmtN(tot.pZero)+'</td><td>'+fmtN(tot.lZero)+'</td></tr></tfoot>';
+}
+
+/* groups: [{name|null, rows}] sharing the same offset columns */
+function matrix(el,groups,rg,field,fmt,tone){
+  var cols=[];for(var i=rg.min;i<=rg.max;i++)cols.push(i);
+  var multi=groups.length>1, max=0;
+  groups.forEach(function(g){g.rows.forEach(function(r){cols.forEach(function(c){max=Math.max(max,r[field][c]||0)})})});
+  var span=cols.length+3, gt={},ggrand=0,gp=0;
+  var head='<thead><tr><th>Month 0</th><th class="c">Partners</th>'+cols.map(function(c){return '<th class="c">'+c+'</th>'}).join('')+'<th class="c">Total</th></tr></thead>';
+  function cell(v,tt){var a=max?Math.min(1,v/max):0;var bg=v?'background:color-mix(in srgb,'+tone+' '+Math.round(12+a*58)+'%,transparent)':'';return '<td class="c" style="'+bg+'">'+(v?fmt(v):'')+'</td>'}
+  var body='';
+  groups.forEach(function(g){
+    var ct={},cg=0,cp=0;
+    if(multi)body+='<tr class="grp"><td colspan="'+span+'">'+esc(g.name)+'</td></tr>';
+    g.rows.forEach(function(r){
+      var rt=0; cp+=r.partners;
+      var cells=cols.map(function(c){var v=r[field][c]||0;rt+=v;ct[c]=(ct[c]||0)+v;gt[c]=(gt[c]||0)+v;return cell(v)}).join('');
+      cg+=rt;
+      body+='<tr><td>'+mlabel(r.key)+'</td><td class="c">'+fmtN(r.partners)+'</td>'+cells+'<td class="c"><strong>'+(rt?fmt(rt):'')+'</strong></td></tr>';
+    });
+    gp+=cp; ggrand+=cg;
+    if(multi)body+='<tr class="sub"><td>'+esc(g.name)+' total</td><td class="c">'+fmtN(cp)+'</td>'+cols.map(function(c){return '<td class="c">'+(ct[c]?fmt(ct[c]):'')+'</td>'}).join('')+'<td class="c">'+(cg?fmt(cg):'')+'</td></tr>';
+  });
+  var foot='<tfoot><tr><td>'+(multi?'All selected':'Total')+'</td><td class="c">'+fmtN(gp)+'</td>'+cols.map(function(c){return '<td class="c">'+(gt[c]?fmt(gt[c]):'')+'</td>'}).join('')+'<td class="c">'+(ggrand?fmt(ggrand):'')+'</td></tr></tfoot>';
+  el.innerHTML=gp?head+'<tbody>'+body+'</tbody>'+foot:'<tbody><tr><td class="empty">No partners in this selection.</td></tr></tbody>';
+}
+function barChart(title,cal,field,fmt){
+  var max=Math.max.apply(null,cal.map(function(c){return c[field]}).concat([1]));
+  return '<div class="panel"><h2>'+title+'</h2><div class="bars">'+cal.map(function(c){
+    var h=Math.round(c[field]/max*100);
+    return '<div class="bcol"><div class="bv">'+(c[field]?fmt(c[field]):'')+'</div><div class="b" style="height:'+h+'%"></div><div class="bl">'+(MN[parseInt(c.key.slice(5),10)-1]||'?')+" '"+c.key.slice(2,4)+'</div></div>';
+  }).join('')+'</div></div>';
+}
+function renderMonthly(ps){
+  var names=selectedNames(), multi=names.length>=2;
+  $('monthNote').textContent='Showing '+scopeText()+'. Month 0 is the month each partner was '+(S.anchor==='onboarded_date'?'onboarded':'first captured as a lead')+'.'+(multi?' Each selected campaign has its own rows, with a total at the end.':'');
+  var rg=cohortRange(ps), groups;
+  if(multi)groups=names.map(function(n){return {name:n,rows:cohortRows(ps.filter(function(p){return p.campaign===n}))}});
+  else groups=[{name:null,rows:cohortRows(ps)}];
+  matrix($('mxLeads'),groups,rg,'leads',fmtN,'var(--teal)');
+  matrix($('mxConv'),groups,rg,'conv',fmtN,'var(--slate)');
+  matrix($('mxRev'),groups,rg,'rev',fmtR,'var(--amber)');
+  var cr=calRange(ps), cal=calendar(ps,cr);
+  $('charts').innerHTML=cal.length?
+    barChart('Leads shared by calendar month',cal,'leads',fmtN)+barChart('Conversions by calendar month',cal,'conv',fmtN)+barChart('Revenue by calendar month',cal,'rev',function(v){return v>=1000?'₹'+(v/1000).toFixed(1)+'k':'₹'+Math.round(v)}):'';
+  var hd='<thead><tr><th>Month</th><th>Partners onboarded</th><th>Leads shared</th><th>Converted</th><th>Revenue</th></tr></thead>';
+  function crow(c){return '<tr><td>'+mlabel(c.key)+'</td><td>'+fmtN(c.onb)+'</td><td>'+fmtN(c.leads)+'</td><td>'+fmtN(c.conv)+'</td><td>'+fmtR(c.rev)+'</td></tr>'}
+  var body='';
+  if(multi){
+    names.forEach(function(n){
+      var cc=calendar(ps.filter(function(p){return p.campaign===n}),cr);
+      body+='<tr class="grp"><td colspan="5" style="text-align:left;font-weight:600;background:var(--paper)">'+esc(n)+'</td></tr>'+cc.map(crow).join('');
+    });
+    body+='<tr class="grp"><td colspan="5" style="text-align:left;font-weight:600;background:var(--paper)">All selected</td></tr>';
+  }
+  body+=cal.map(crow).join('');
+  $('calTable').innerHTML=hd+'<tbody>'+body+'</tbody>';
+}
+function showErr(e){var b=$('errbox');b.style.display='block';b.textContent='Something went wrong while drawing this page: '+(e&&e.message?e.message:e)}
+function render(){
+  try{
+    $('errbox').style.display='none';
+    var ps=selection();
+    renderOverview(ps); renderMonthly(ps); renderMenu();
+  }catch(e){showErr(e);if(window.console)console.error(e)}
+}
+
+/* ---------- campaign multi-select ---------- */
+function btnLabel(){
+  var n=selectedNames(), vis=Object.keys(visibleNames()).length;
+  if(!n.length)return 'All '+(S.type==='ALL'?'':S.type+' ')+'campaigns ('+vis+')';
+  if(n.length===1)return n[0];
+  return n.length+' campaigns selected';
+}
+function renderMenu(){
+  $('msBtn').textContent=btnLabel();
+  var vis=visibleNames(), f=S.filter.toLowerCase();
+  var names=Object.keys(vis).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:'base'})}).filter(function(n){return !f||n.toLowerCase().indexOf(f)>-1});
+  $('msList').innerHTML=names.length?names.map(function(n){
+    return '<label><input type="checkbox" data-c="'+esc(n)+'"'+(S.sel[n]?' checked':'')+'><span>'+esc(n)+'</span><span class="cnt">'+vis[n]+'</span></label>';
+  }).join(''):'<div class="empty">No campaigns match.</div>';
+}
+function toggleCamp(c){ if(S.sel[c])delete S.sel[c]; else S.sel[c]=true; render() }
+function setPanel(open){
+  $('msPanel').hidden=!open; $('msBtn').setAttribute('aria-expanded',open);
+  if(open){$('msSearch').value='';S.filter='';renderMenu();$('msSearch').focus()}
+}
+$('msBtn').addEventListener('click',function(){setPanel($('msPanel').hidden)});
+$('msList').addEventListener('change',function(e){var c=e.target.getAttribute('data-c');if(c)toggleCamp(c)});
+$('msSearch').addEventListener('input',function(){S.filter=this.value;renderMenu()});
+$('msAll').addEventListener('click',function(){Object.keys(visibleNames()).forEach(function(n){S.sel[n]=true});render()});
+$('msClear').addEventListener('click',function(){S.sel={};render()});
+document.addEventListener('click',function(e){if(!$('ms').contains(e.target))setPanel(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('msPanel').hidden){setPanel(false);$('msBtn').focus()}});
+
+/* ---------- setup ---------- */
+function setData(text){
+  S.partners=buildPartners(parseCSV(text));
+  var latest='';S.partners.forEach(function(p){[p.onboarded_date,p.partner_lead_date].forEach(function(d){if(d&&d>latest)latest=d});p.leads.forEach(function(l){[l.date,l.convDate].forEach(function(d){if(d&&d>latest)latest=d})})});
+  $('asof').textContent=S.partners.length+' partners · data up to '+latest;
+  S.sel={}; render();
+}
+function load(){
+  var errs=[];
+  (function next(i){
+    if(i>=DATA_SOURCES.length){
+      $('asof').textContent='Data not loaded';
+      showErr('Could not load the data. Make sure the Google Sheet is shared as "Anyone with the link can view". ('+errs.join('; ')+')');
+      return;
+    }
+    fetch(DATA_SOURCES[i],{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()})
+      .then(function(t){
+        if(t.split('\n')[0].indexOf('partner_id')<0)throw new Error('not the expected data');
+        setData(t);
+      })
+      .catch(function(e){errs.push((i+1)+': '+(e&&e.message?e.message:e));next(i+1)});
+  })(0);
+}
+function showPage(p){
+  ['overview','monthly'].forEach(function(n){
+    $('page-'+n).classList.toggle('on',n===p);
+    $('tab-'+n).setAttribute('aria-selected',n===p);
+  });
+  try{ if(location.hash!=='#'+p)history.replaceState(null,'','#'+p) }catch(e){}
+  try{ window.scrollTo(0,0) }catch(e){}
+}
+document.querySelectorAll('nav.tabs button').forEach(function(b){b.addEventListener('click',function(){showPage(b.dataset.page)})});
+$('typeSeg').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return;
+  S.type=b.dataset.v;
+  this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+  var vis=visibleNames(); Object.keys(S.sel).forEach(function(n){if(!(n in vis))delete S.sel[n]});   // drop picks that are no longer visible
+  render();
+});
+$('anchorSeg').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return;
+  S.anchor=b.dataset.v;
+  this.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+  render();
+});
+function tableAct(e){
+  var th=e.target.closest('th.sort');
+  if(th){var k=th.dataset.k; if(S.sortKey===k)S.sortDir*=-1; else{S.sortKey=k;S.sortDir=(k==='campaign'||k==='type')?1:-1}; renderCampTable();return}
+  var tr=e.target.closest('tr.click');
+  if(tr)toggleCamp(tr.dataset.c);
+}
+$('campTable').addEventListener('click',tableAct);
+$('campTable').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();tableAct(e)}});
+window.addEventListener('hashchange',function(){var h=location.hash.slice(1);if(h==='overview'||h==='monthly')showPage(h)});
+if(location.hash==='#monthly')showPage('monthly');
+load();
+})();
+</script>
+</body>
+</html>
